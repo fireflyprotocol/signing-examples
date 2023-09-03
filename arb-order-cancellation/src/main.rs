@@ -37,17 +37,10 @@ async fn main() {
 
     let order_hash = order::get_hash(order, TRADER_CONTRACT, NETWORK_ID);
     println!("Order hash: 0x{}\n", order_hash);
-    // 0xf72743780d4d05dab491a370eb280a511b96e4c68234f4e6f5f9d2fe48645df5
-    // 0xf72743780d4d05dab491a370eb280a511b96e4c68234f4e6f5f9d2fe48645df5
 
     let signature =  order::sign_order(wallet, &order_hash).await;
     println!("signature: {}\n", signature);
-    // 0xb2b516102d7c0061990354861859cc33cd8380f5e72d15890ad86639c43ef30026cb2de176a3d51f290b4fe99e0a1c66cdf34a479ca0015494d62378d08a56d91b01
-    // 0xb2b516102d7c0061990354861859cc33cd8380f5e72d15890ad86639c43ef30026cb2de176a3d51f290b4fe99e0a1c66cdf34a479ca0015494d62378d08a56d91b01
 
-
-
-    // adding 0x to the hash - I believe "0x" is hashed as well
     let order_hash_0x = "0x".to_string() + &order_hash;
 
     let cancel_order_hash = order::get_cancel_hash(&order_hash_0x, TRADER_CONTRACT, NETWORK_ID);
