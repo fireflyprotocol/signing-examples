@@ -7,6 +7,8 @@ use web3::signing::keccak256;
 
 const EIP712_ORDER_STRUCT_STRING: &str = "Order(bytes8 flags,uint128 quantity,uint128 price,uint128 triggerPrice,uint128 leverage,address maker,uint128 expiration)";
 
+const EIP712_CANCEL_ORDER_STRUCT_STRING: &str = "CancelLimitOrder(string action,bytes32[] orderHashes)";
+
 const EIP712_DOMAIN_STRING: &str = "EIP712Domain(string name,string version,uint128 chainId,address verifyingContract)";
 
 const EIP712_DOMAIN_NAME: &str = "IsolatedTrader";
@@ -64,9 +66,6 @@ fn get_order_flags(order:Order) -> String{
 
 }
 
-/**
- * Given an order, encodes its data and computes its keckak hash just like solidity
- */
 pub fn get_order_data_hash(order:Order) -> String{
 
     // compute order flags
@@ -85,6 +84,25 @@ pub fn get_order_data_hash(order:Order) -> String{
 
     return encode_and_hash(&tokens);
 }
+
+/**
+ * Given an order hash, encodes its data and computes its keckak hash just like solidity
+ */
+pub fn get_order_cancel_hash(order_hash: &str) -> String{
+    
+    let order_hash_sha3 = encode_and_hash(&[
+        Token::FixedBytes(Vec::from(hex::decode(order_hash).unwrap()))
+    ]);
+
+    let tokens = [
+        Token::FixedBytes(Vec::from(keccak256(EIP712_CANCEL_ORDER_STRUCT_STRING.as_bytes()))),
+        Token::FixedBytes(Vec::from(keccak256(b"Cancel Orders"))),
+        Token::FixedBytes(Vec::from(hex::decode(order_hash_sha3).unwrap())),
+    ];
+
+    return encode_and_hash(&tokens);
+}
+
 
 /**
  * Returns the EIP-712 style domain hash
@@ -127,13 +145,24 @@ fn get_eip_712_hash(domain_separator_hash: &str, data_hash: &str) -> String{
 pub fn get_hash(order:Order, trader_contract: &str, network_id: &str) -> String {
 
     let order_data_hash = get_order_data_hash(order);
-
     let domain_hash = get_domain_separator_hash(trader_contract, network_id);
-
     let eip712_order_hash = get_eip_712_hash(&domain_hash, &order_data_hash);
 
     return eip712_order_hash;
+}
 
+/**
+ * Given an order hash, trader contract address and network id, 
+ * returns EIP 712 cancel hash of the order
+ */
+pub fn get_cancel_hash (order_hash: &str,trader_contract: &str, network_id: &str) -> String {
+    let order_cancellation_hash = get_order_cancel_hash(order_hash);
+
+    let domain_hash = get_domain_separator_hash(trader_contract, network_id);
+
+    let eip712_cancel_order_hash = get_eip_712_hash(&domain_hash, &order_cancellation_hash);
+
+    return eip712_cancel_order_hash;
 }
 
 pub async fn sign_order(wallet: LocalWallet, eip712_order_hash: &str) -> String{    
