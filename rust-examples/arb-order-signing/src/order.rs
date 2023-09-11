@@ -61,7 +61,6 @@ fn get_order_flags(order:Order) -> String{
 
     let salt:u128 = order.salt.parse().unwrap();
     let flags = format!("{:0>15}{}", format!("{:x}", salt), boolean_flag);
-
     return flags;
 
 }
@@ -144,10 +143,9 @@ fn get_eip_712_hash(domain_separator_hash: &str, data_hash: &str) -> String{
  */
 pub fn get_hash(order:Order, trader_contract: &str, network_id: &str) -> String {
 
-    let order_data_hash = get_order_data_hash(order);
+    let  order_data_hash = get_order_data_hash(order);
     let domain_hash = get_domain_separator_hash(trader_contract, network_id);
     let eip712_order_hash = get_eip_712_hash(&domain_hash, &order_data_hash);
-
     return eip712_order_hash;
 }
 
@@ -157,9 +155,7 @@ pub fn get_hash(order:Order, trader_contract: &str, network_id: &str) -> String 
  */
 pub fn get_cancel_hash (order_hash: &str,trader_contract: &str, network_id: &str) -> String {
     let order_cancellation_hash = get_order_cancel_hash(order_hash);
-
     let domain_hash = get_domain_separator_hash(trader_contract, network_id);
-
     let eip712_cancel_order_hash = get_eip_712_hash(&domain_hash, &order_cancellation_hash);
 
     return eip712_cancel_order_hash;
@@ -169,7 +165,3 @@ pub async fn sign_order(wallet: LocalWallet, eip712_order_hash: &str) -> String{
     let signature = wallet.sign_message(hex::decode(&eip712_order_hash).unwrap().as_slice()).await.unwrap().to_string();
     return format!("0x{}01", signature);
 }
-
-
-
-

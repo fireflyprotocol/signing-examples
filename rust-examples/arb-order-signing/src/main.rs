@@ -25,8 +25,8 @@ async fn main() {
         is_buy: true,
         reduce_only: true,
         price: Unit::Ether(&"1800").to_wei_str().unwrap(), // in 1e18 format
-        quantity: Unit::Ether(&"1").to_wei_str().unwrap(), // in 1e18 format
-        leverage: Unit::Ether(&"1").to_wei_str().unwrap(), // in 1e18 format
+        quantity: Unit::Ether(&"6").to_wei_str().unwrap(), // in 1e18 format
+        leverage: Unit::Ether(&"0.02").to_wei_str().unwrap(), // in 1e18 format
         trigger_price:  Unit::Ether(&"0").to_wei_str().unwrap(), // in 1e18 format, always zero
         expiration:"1690995498".to_string(),
         salt:"1231231231".to_string(),
@@ -35,14 +35,21 @@ async fn main() {
 
     println!("{:?}\n", order);
 
-
     let order_hash = order::get_hash(order, TRADER_CONTRACT, NETWORK_ID);
-    
     println!("Order hash: 0x{}\n", order_hash);
 
     let signature =  order::sign_order(wallet, &order_hash).await;
+    println!("Order signature: {}\n", signature);
 
-    println!("signature: {}\n", signature);
+    let order_hash_0x = "0x".to_string() + &order_hash;
+
+    let cancel_order_hash = order::get_cancel_hash(&order_hash_0x, TRADER_CONTRACT, NETWORK_ID);
+    println!("Cancel Order hash: 0x{}\n", cancel_order_hash);
+
+    // sign cancellation hash
+    let wallet = WALLET_KEY.parse::<LocalWallet>().unwrap();
+    let cancel_signature =  order::sign_order(wallet, &cancel_order_hash).await;
+    println!("Cancel signature: {}\n", cancel_signature);
 
 }
 

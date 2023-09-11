@@ -12,7 +12,6 @@ async fn main() {
     let hash = hex::encode(keccak256(msg.as_bytes()));
     println!("message hash: {}", hash);
 
-
     const WALLET_KEY: &str = "2ee813034aab842141cb85d477f7d0e359838f46fcab34a935c69410a4d39efb";
 
     let wallet = WALLET_KEY.parse::<LocalWallet>().unwrap();

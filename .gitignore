@@ -12,3 +12,28 @@ Cargo.lock
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
+
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# gen by ide
+.idea
+.vscode
+# log files
+*.log*
+# gen by Makefile
+/build/bin
+*.key
+sui.keystore.fortest
+/vendor/
