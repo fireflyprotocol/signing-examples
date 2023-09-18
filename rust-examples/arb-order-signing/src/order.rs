@@ -89,7 +89,10 @@ pub fn get_order_data_hash(order:Order) -> String{
  */
 pub fn get_order_cancel_hash(order_hash: &str) -> String{
     
+    // to cancel N orders, just pass all the hashes over here
+    // this will create a single signature for all orders to be cnacelled
     let order_hash_sha3 = encode_and_hash(&[
+        Token::FixedBytes(Vec::from(hex::decode(order_hash).unwrap())),
         Token::FixedBytes(Vec::from(hex::decode(order_hash).unwrap()))
     ]);
 
