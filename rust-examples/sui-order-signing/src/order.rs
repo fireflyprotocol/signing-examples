@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sha256::digest;
 use std::collections::HashMap;
 use blake2b_simd::Params;
 
@@ -85,7 +84,7 @@ pub async fn post_cancel_order(order_cancel: OrderCancellationJSONRequest, jwt_t
         
     // POST Request and obtain JWT Token
     let client = reqwest::Client::new();
-    let res = client.delete("https://dapi.api.sui-prod.bluefin.io/orders/hash")
+    let res = client.delete("https://dapi.api.sui-staging.bluefin.io/orders/hash")
         .header("Authorization", "Bearer ".to_owned() + &jwt_token.to_owned())
         .json(&order_cancel)
         .send()
@@ -144,7 +143,7 @@ pub async fn post_signed_order(order: &Order, order_hash_sig:String, jwt_token: 
     };
     
     let client = reqwest::Client::new();
-    let res = client.post("https://dapi.api.sui-prod.bluefin.io/orders")
+    let res = client.post("https://dapi.api.sui-staging.bluefin.io/orders")
         .header("Authorization", "Bearer ".to_owned() + &jwt_token.to_owned()) 
         .json(&order_request)
         .send()
@@ -155,6 +154,7 @@ pub async fn post_signed_order(order: &Order, order_hash_sig:String, jwt_token: 
         .unwrap();
     
     println!("{}", res);
+    
     let v: Value = serde_json::from_str(&res).expect("JSON Decoding failed");
     let hash : &str = v["hash"].as_str().unwrap();
     return hash.to_string();
@@ -166,7 +166,7 @@ pub async fn post_signed_order(order: &Order, order_hash_sig:String, jwt_token: 
  */
 pub async fn get_market_id (market: &str) -> String{
     let client = reqwest::Client::new();
-    let res = client.get("https://dapi.api.sui-prod.bluefin.io/meta?symbol=".to_owned() + &market.to_string().to_owned() )
+    let res = client.get("https://dapi.api.sui-staging.bluefin.io/meta?symbol=".to_owned() + &market.to_string().to_owned() )
         .send()
         .await
         .unwrap()
@@ -185,7 +185,7 @@ pub async fn get_market_id (market: &str) -> String{
 /**
  * Given an order, returns hash of the order
  */
-pub async fn get_order_hash(order: &Order) -> String {
+pub async fn get_serialized_order(order: &Order) -> String {
 
     let flags = get_order_flags(&order);
     let flags_array = format!("{:0>2x}", flags);
@@ -209,5 +209,5 @@ pub async fn get_order_hash(order: &Order) -> String {
         + &flags_array
         + &bluefin_string;
 
-    return digest(order_buffer);
+    return order_buffer;
 }
