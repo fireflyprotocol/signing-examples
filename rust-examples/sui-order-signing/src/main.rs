@@ -1,6 +1,7 @@
 use ed25519_dalek::*;
 use web3_unit_converter::Unit;
 use blake2b_simd::Params;
+use sha256::digest;
 
 mod order;
 
@@ -46,7 +47,6 @@ async fn main() {
     let wallet_address = "0x".to_string() + &hash.to_hex().to_ascii_lowercase();
     println!("Wallet Address: {}", wallet_address);
 
-
     // Create an Order
     let order = order::Order{
         market: market.to_string(),
@@ -58,7 +58,7 @@ async fn main() {
         reduceOnly: false,
         postOnly: false,
         orderbookOnly: true,
-        expiration: 1696496024330,
+        expiration: 1696489923396,
         salt: 1695466663327505,
         ioc: false,
         orderType: "MARKET".to_string(),
@@ -66,14 +66,16 @@ async fn main() {
     };
 
     // Generate Order Hash, Sign, append "1" and append the base64 of the public key
-    let order_hash = order::get_order_hash(&order).await;
-    let order_hash_decoded = hex::decode(order_hash).expect("Decoding failed");
-    let order_hash_sig  = signingkey.sign(&order_hash_decoded);
-    let order_hash_sig = order_hash_sig.to_string().to_ascii_lowercase() + "1" + &public_key_b64;
-    println!("Order Hash Sig: {}", order_hash_sig);
+    let serialized_msg = order::get_serialized_order(&order).await;
+    let order_hash = digest(hex::decode(&serialized_msg).expect("Decoding failed"));
+    println!("Order Hash: {}", order_hash);
+
+    let msg_hash_decoded = hex::decode(digest(&serialized_msg)).expect("Decoding failed");
+    let msg_hash_sig  = signingkey.sign(&msg_hash_decoded);
+    let msg_hash_sig = msg_hash_sig.to_string().to_ascii_lowercase() + "1" + &public_key_b64;
 
     // Post Order and return the order hash
-    let returned_order_hash = order::post_signed_order(&order,order_hash_sig, jwt_token).await;
+    let returned_order_hash = order::post_signed_order(&order,msg_hash_sig, jwt_token).await;
     println!("Returned Order Hash: {}", returned_order_hash);
 
     let hash = order::create_signed_cancel_orders(&returned_order_hash);
