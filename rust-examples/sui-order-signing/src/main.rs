@@ -59,8 +59,8 @@ async fn main() {
         reduceOnly: false,
         postOnly: false,
         orderbookOnly: true,
-        expiration: 1696489933397,
-        salt: 1695466663327505,
+        expiration: 1696489993397,
+        salt: 1695466663327515,
         ioc: false,
         orderType: "MARKET".to_string(),
         timeInForce: "GTT".to_string()

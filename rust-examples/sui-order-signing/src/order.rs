@@ -55,7 +55,7 @@ pub struct OrderCancellationJSONRequest {
 /**
  * Converts decimal to BCS encoding
  */
-pub fn decimal_to_bcs(num: u8) -> Vec<u8>{
+pub fn decimal_to_bcs(num: u64) -> Vec<u8>{
     let mut bcs_bytes: Vec<u8> = Vec::new();
     let mut temp_num = num;
     while temp_num > 0{
@@ -64,7 +64,7 @@ pub fn decimal_to_bcs(num: u8) -> Vec<u8>{
         if temp_num > 0x7F{
             bcs_byte |= 0x80;
         }
-        bcs_bytes.push(bcs_byte);
+        bcs_bytes.push(bcs_byte as u8);
 
         temp_num >>= 7;
 
@@ -135,9 +135,10 @@ pub fn create_signed_cancel_order(order_hash : &str) -> blake2b_simd::Hash{
 pub fn create_signed_cancel_orders(order_hashes : Vec<&str>) -> blake2b_simd::Hash{
     let msg = json!({ "orderHashes": order_hashes }).to_string();
     let mut intent = vec![3, 0, 0];
-    let mut bcs =  decimal_to_bcs(msg.len() as u8);
+    let mut bcs =  decimal_to_bcs(msg.len() as u64);
     intent.append(&mut bcs);
     intent.extend_from_slice(msg.as_bytes());
+    // println!("Intent: {:?}", intent);
 
     let hash = Params::new()
         .hash_length(32)
@@ -184,7 +185,7 @@ pub async fn post_signed_order(order: &Order, order_hash_sig:String, jwt_token: 
         .await
         .unwrap();
     
-    println!("{}", res);
+    println!("Response: {}", res);
     
     let v: Value = serde_json::from_str(&res).expect("JSON Decoding failed");
     let hash : &str = v["hash"].as_str().unwrap();
