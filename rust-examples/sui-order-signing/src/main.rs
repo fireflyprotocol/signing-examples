@@ -5,6 +5,7 @@ use sha256::digest;
 
 mod order;
 
+
 #[tokio::main]
 async fn main() {
     let wallet_key = "c501312ca9eb1aaac6344edbe160e41d3d8d79570e6440f2a84f7d9abf462270";
@@ -58,7 +59,7 @@ async fn main() {
         reduceOnly: false,
         postOnly: false,
         orderbookOnly: true,
-        expiration: 1696489923396,
+        expiration: 1696489933397,
         salt: 1695466663327505,
         ioc: false,
         orderType: "MARKET".to_string(),
@@ -78,11 +79,14 @@ async fn main() {
     let returned_order_hash = order::post_signed_order(&order,msg_hash_sig, jwt_token).await;
     println!("Returned Order Hash: {}", returned_order_hash);
 
-    let hash = order::create_signed_cancel_orders(&returned_order_hash);
+    // order hash generated should be the same as the one returned
+    assert_eq!(returned_order_hash, order_hash);
 
+    // Hash the order hashes that require cancellation and sign them
+    let hash = order::create_signed_cancel_order(&order_hash);
     let cancel_sig_temp  = signingkey.sign(&hash.as_bytes());
     let cancel_sig = cancel_sig_temp.to_string().to_ascii_lowercase() + "1";
-    // println!("Signature: {}", cancel_sig);
+    println!("Signature: {}", cancel_sig);
 
     // Combine Onboarding Signature and base64 of Public Key
     let cancel_sig_full = cancel_sig + &public_key_b64;
@@ -90,12 +94,11 @@ async fn main() {
 
     let cancel_order = order::OrderCancellationJSONRequest {
         symbol : market.to_string(),
-        orderHashes : [returned_order_hash],
+        orderHashes : [order_hash],
         cancelSignature : cancel_sig_full,
         parentAddress: "".to_string()
     };
 
     let response = order::post_cancel_order(cancel_order, jwt_token).await;
     println!("Response: {}", response);
-
 }

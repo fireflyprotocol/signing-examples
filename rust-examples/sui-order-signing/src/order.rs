@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use blake2b_simd::Params;
+use bcs::to_bytes;
+use serde_json::json;
 
 #[derive(Debug, Clone)]
 pub struct Order {
@@ -48,6 +50,27 @@ pub struct OrderCancellationJSONRequest {
     pub orderHashes: [String; 1],
     pub parentAddress: String,
     pub cancelSignature: String,
+}
+
+/**
+ * Converts decimal to BCS encoding
+ */
+pub fn decimal_to_bcs(num: u8) -> Vec<u8>{
+    let mut bcs_bytes: Vec<u8> = Vec::new();
+    let mut temp_num = num;
+    while temp_num > 0{
+        let mut bcs_byte = temp_num & 0x7F;
+
+        if temp_num > 0x7F{
+            bcs_byte |= 0x80;
+        }
+        bcs_bytes.push(bcs_byte);
+
+        temp_num >>= 7;
+
+    }
+
+    return bcs_bytes;
 }
 
 
@@ -100,13 +123,21 @@ pub async fn post_cancel_order(order_cancel: OrderCancellationJSONRequest, jwt_t
 /**
  * Given an order hash, returns a cancel order hash
  */
-pub fn create_signed_cancel_orders(order_hash : &str) -> blake2b_simd::Hash{
-    let mut msg_dict = HashMap::new();
-    msg_dict.insert("orderHashes", [order_hash]);
+pub fn create_signed_cancel_order(order_hash : &str) -> blake2b_simd::Hash{
+    let order_hashes = vec![order_hash];
+    let hash = create_signed_cancel_orders(order_hashes);
+    return hash;
+}
 
-    let msg_str = serde_json::to_string(&msg_dict).unwrap();
-    let mut intent: Vec<u8> = vec![3, 0, 0, msg_str.len() as u8];
-    intent.extend_from_slice(msg_str.as_bytes());
+/**
+ * Given an Vec of order hashes, returns a cancel order hash
+ */
+pub fn create_signed_cancel_orders(order_hashes : Vec<&str>) -> blake2b_simd::Hash{
+    let msg = json!({ "orderHashes": order_hashes }).to_string();
+    let mut intent = vec![3, 0, 0];
+    let mut bcs =  decimal_to_bcs(msg.len() as u8);
+    intent.append(&mut bcs);
+    intent.extend_from_slice(msg.as_bytes());
 
     let hash = Params::new()
         .hash_length(32)
